@@ -187,7 +187,11 @@
     .schema th { background: #171717; color: #fff; font-family: var(--mono); font-size: 13px; font-weight: 600; }
     .schema td { color: var(--muted); font-size: 17px; }
 
-    code { font-family: var(--mono); }
+    code {
+      font-family: var(--mono);
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+    }
     :not(pre) > code {
       padding: .1em .32em;
       border-radius: 6px;
@@ -208,6 +212,8 @@
       padding: 18px;
       color: #c9d1d9 !important;
       font-family: var(--mono);
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
       font-size: 13px;
       line-height: 1.48;
       background: transparent !important;
