@@ -120,6 +120,20 @@
 
     .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+    .grid.code-grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      align-items: stretch;
+    }
+
+    .callout {
+      padding: 18px 20px;
+      border: 1px solid rgba(251, 191, 36, 0.34);
+      border-radius: 20px;
+      background: rgba(251, 191, 36, 0.10);
+      color: #fde68a;
+      font-weight: 700;
+    }
+
     .card {
       padding: 22px;
       border: 1px solid var(--border);
@@ -305,7 +319,7 @@
       body { overflow: auto; }
       .deck { height: auto; margin: 18px auto 84px; }
       .slide { position: relative; min-height: calc(100vh - 120px); }
-      .grid, .grid.two, .flow { grid-template-columns: 1fr; }
+      .grid, .grid.two, .grid.code-grid, .flow { grid-template-columns: 1fr; }
       .footer { width: calc(100% - 32px); justify-content: center; }
     }
   </style>
@@ -316,12 +330,12 @@
       <div class="content">
         <p class="eyebrow">PHP + MySQL + jQuery</p>
         <h1>Message Board<br><span class="accent">留言板專案</span></h1>
-        <p class="lead">一個可部署在 XAMPP / Endor LAMP Sandbox 的單頁留言板：使用 jQuery AJAX 送出留言，PHP API 處理驗證與資料庫寫入，MySQL/MariaDB 保存資料。</p>
+        <p class="lead">這份簡報用課堂報告的角度，說明我如何用 jQuery、PHP、MySQL 與 XAMPP-compatible 環境做出一個單頁留言板。</p>
         <div class="badge-row">
-          <span class="badge">Apache / PHP</span>
-          <span class="badge">PDO + MySQL</span>
-          <span class="badge">jQuery AJAX</span>
-          <span class="badge">XSS / SQL Injection 防護</span>
+          <span class="badge">jQuery DOM / AJAX</span>
+          <span class="badge">PHP 表單處理</span>
+          <span class="badge">XAMPP / LAMP 部署</span>
+          <span class="badge">MySQL Table Schema</span>
         </div>
       </div>
     </section>
@@ -349,6 +363,27 @@
 
     <section class="slide">
       <div class="content">
+        <p class="eyebrow">Class Focus</p>
+        <h2>這門課學到的東西，我怎麼講給同學聽？</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>jQuery</h3>
+            <p>用 <code>$(function(){ ... })</code> 等 DOM ready 後綁定事件；用 <code>$.ajax()</code> 非同步呼叫 PHP API，不需要重新整理頁面。</p>
+          </article>
+          <article class="card">
+            <h3>PHP</h3>
+            <p>用 <code>$_POST</code> 接收表單資料，做必填/長度驗證，再用 PDO 連線資料庫並回傳 JSON。</p>
+          </article>
+          <article class="card">
+            <h3>XAMPP / LAMP</h3>
+            <p>把專案放進 <code>htdocs</code>，啟動 Apache + MySQL，匯入 schema 後就可以用 browser 測試完整流程。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
         <p class="eyebrow">Files</p>
         <h2>專案檔案結構</h2>
         <pre><code>message-board/
@@ -368,24 +403,72 @@
 
     <section class="slide">
       <div class="content">
-        <p class="eyebrow">Frontend</p>
-        <h2>前端畫面與互動</h2>
-        <div class="grid two">
+        <p class="eyebrow">jQuery Implementation</p>
+        <h2>前端：用 jQuery 做事件處理與 AJAX</h2>
+        <div class="grid code-grid">
+          <pre><code>$(function () {
+  const $form = $('#message-form');
+  const $name = $('#name');
+  const $content = $('#content');
+
+  $form.on('submit', function (event) {
+    event.preventDefault();
+
+    $.ajax({
+      url: 'api/create.php',
+      method: 'POST',
+      dataType: 'json',
+      data: {
+        name: $.trim($name.val()),
+        content: $.trim($content.val())
+      }
+    }).done(function () {
+      $content.val('');
+      loadMessages();
+    });
+  });
+});</code></pre>
           <article class="card">
-            <h3><code>index.html</code></h3>
+            <h3>我想強調的 jQuery 重點</h3>
             <ul>
-              <li>新增留言表單：暱稱、留言內容、送出按鈕。</li>
-              <li>留言列表區塊：顯示最新留言與空狀態。</li>
-              <li>載入 jQuery 3.7.1 與 <code>assets/js/app.js</code>。</li>
+              <li><code>$(function(){})</code>：等 DOM 載入後再操作元素。</li>
+              <li><code>event.preventDefault()</code>：阻止表單傳統跳頁送出。</li>
+              <li><code>$.ajax()</code>：把資料送到 PHP，並期待 JSON 回應。</li>
+              <li><code>.done()</code> / <code>.fail()</code>：分開處理成功與失敗。</li>
             </ul>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Design Highlight</p>
+        <h2>亮點設計 1：不刷新頁面的留言列表</h2>
+        <div class="grid code-grid">
+          <pre><code>function loadMessages() {
+  return $.ajax({
+    url: 'api/list.php',
+    method: 'GET',
+    dataType: 'json'
+  }).done(function (response) {
+    if (response && response.success) {
+      renderMessages(response.messages || []);
+    }
+  });
+}
+
+function escapeHtml(value) {
+  return $('&lt;div&gt;')
+    .text(value == null ? '' : String(value))
+    .html();
+}</code></pre>
           <article class="card">
-            <h3><code>assets/js/app.js</code></h3>
+            <h3>為什麼這樣設計？</h3>
             <ul>
-              <li>頁面載入時呼叫 <code>api/list.php</code>。</li>
-              <li>表單送出時 POST 到 <code>api/create.php</code>。</li>
-              <li>成功新增後清空 textarea 並重新載入列表。</li>
-              <li>使用 jQuery <code>.text()</code> 轉義使用者輸入。</li>
+              <li>留言列表跟新增留言都走 API，前端只負責畫面更新。</li>
+              <li>新增成功後呼叫 <code>loadMessages()</code>，畫面馬上同步最新資料。</li>
+              <li>用 jQuery <code>.text()</code> escape，再放進 HTML，避免 demo 時被 XSS payload 亂掉。</li>
             </ul>
           </article>
         </div>
@@ -414,6 +497,72 @@
               <li>驗證留言必填、最多 500 字。</li>
               <li>使用 PDO prepared statement 寫入。</li>
               <li>成功回傳 HTTP <code>201</code> 與新增資料。</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">PHP Implementation</p>
+        <h2>後端：PHP 驗證資料後寫入 MySQL</h2>
+        <div class="grid code-grid">
+          <pre><code>$name = trim((string)($_POST['name'] ?? ''));
+$content = trim((string)($_POST['content'] ?? ''));
+
+if ($name === '') {
+    http_response_code(422);
+    echo json_encode([
+        'success' => false,
+        'error' => '暱稱必填。',
+    ]);
+    exit;
+}
+
+$stmt = $pdo->prepare(
+    'INSERT INTO messages (name, content, created_at)
+     VALUES (:name, :content, NOW())'
+);
+$stmt->execute([
+    ':name' => $name,
+    ':content' => $content,
+]);</code></pre>
+          <article class="card">
+            <h3>我在 PHP 這邊做了什麼？</h3>
+            <ul>
+              <li>用 <code>$_POST</code> 接收表單送來的資料。</li>
+              <li>用 <code>trim()</code> 清掉前後空白。</li>
+              <li>錯誤時回傳 HTTP <code>422</code> 與 JSON，前端可以顯示錯誤。</li>
+              <li>寫入資料庫時用 prepared statement，避免 SQL Injection。</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Design Highlight</p>
+        <h2>亮點設計 2：API 回傳統一 JSON 格式</h2>
+        <div class="grid two">
+          <pre><code>// 成功
+{
+  "success": true,
+  "messages": [...]
+}
+
+// 失敗
+{
+  "success": false,
+  "error": "留言內容必填。"
+}</code></pre>
+          <article class="card">
+            <h3>對課堂報告好講的地方</h3>
+            <ul>
+              <li>前端不用猜 PHP 輸出格式，只要看 <code>success</code>。</li>
+              <li>錯誤訊息由後端決定，前端負責顯示。</li>
+              <li>這種格式之後要加刪除、編輯、分頁都可以沿用。</li>
             </ul>
           </article>
         </div>
@@ -515,6 +664,32 @@ CREATE TABLE IF NOT EXISTS messages (
 
     <section class="slide">
       <div class="content">
+        <p class="eyebrow">XAMPP</p>
+        <h2>XAMPP 在這個專案裡的角色</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>它提供了什麼？</h3>
+            <ul>
+              <li><span class="highlight">Apache</span>：負責把 <code>index.html</code>、CSS、JS、PHP API 變成瀏覽器可開的網站。</li>
+              <li><span class="highlight">PHP</span>：執行 <code>api/create.php</code>、<code>api/list.php</code>。</li>
+              <li><span class="highlight">MySQL/MariaDB</span>：保存留言資料。</li>
+              <li><span class="highlight">phpMyAdmin</span>：用圖形介面匯入 <code>schema.sql</code>。</li>
+            </ul>
+          </article>
+          <pre><code># 專案放置位置
+C:\xampp\htdocs\message-board\
+
+# 匯入資料庫
+mysql -u root &lt; database/schema.sql
+
+# 瀏覽器開啟
+http://localhost/message-board/</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
         <p class="eyebrow">Deployment</p>
         <h2>XAMPP / Endor 部署重點</h2>
         <div class="grid two">
@@ -544,7 +719,7 @@ CREATE TABLE IF NOT EXISTS messages (
       <div class="content">
         <p class="eyebrow">Summary</p>
         <h2>總結</h2>
-        <p class="lead">這個留言板把基礎 Web App 的主要環節串起來：前端表單與 AJAX、PHP API、資料庫 schema、輸入驗證、SQL Injection 與 XSS 防護，以及 XAMPP / Endor LAMP 的部署流程。</p>
+        <p class="lead">這個留言板把課堂中的 jQuery、PHP、XAMPP、MySQL 串成一個完整範例：從畫面互動、API、資料庫，到部署與安全性，都可以用同一個 demo 說清楚。</p>
         <div class="badge-row">
           <span class="badge">小而完整的 CRUD 起點</span>
           <span class="badge">可展示前後端資料流</span>
