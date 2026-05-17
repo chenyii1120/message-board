@@ -203,12 +203,23 @@
       background: #0d1117 !important;
       box-shadow: rgba(0,0,0,.18) 0 0 0 1px, rgba(0,0,0,.20) 0 22px 70px -35px;
     }
-    pre code.hljs {
+    pre code {
+      display: block;
       padding: 18px;
+      color: #c9d1d9 !important;
       font-family: var(--mono);
       font-size: 13px;
       line-height: 1.48;
+      background: transparent !important;
     }
+    pre code.hljs { color: #c9d1d9 !important; }
+    .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #ff7b72 !important; }
+    .hljs-string, .hljs-attr { color: #a5d6ff !important; }
+    .hljs-title, .hljs-function .hljs-title { color: #d2a8ff !important; }
+    .hljs-variable, .hljs-template-variable { color: #ffa657 !important; }
+    .hljs-number, .hljs-literal { color: #79c0ff !important; }
+    .hljs-comment { color: #8b949e !important; font-style: italic; }
+    .hljs-meta { color: #7ee787 !important; }
 
     .callout {
       padding: 18px 20px;
@@ -620,7 +631,18 @@ http://localhost/message-board/</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
   <script>
-    if (window.hljs) window.hljs.highlightAll();
+    function applySyntaxHighlighting() {
+      if (!window.hljs) return;
+      document.querySelectorAll('pre code').forEach((block) => {
+        if (!block.classList.contains('hljs')) {
+          window.hljs.highlightElement(block);
+        }
+      });
+    }
+    window.addEventListener('load', applySyntaxHighlighting);
+    setTimeout(applySyntaxHighlighting, 0);
+    setTimeout(applySyntaxHighlighting, 300);
+    setTimeout(applySyntaxHighlighting, 1000);
 
     const slides = Array.from(document.querySelectorAll('.slide'));
     const counter = document.getElementById('counter');
