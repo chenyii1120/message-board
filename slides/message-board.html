@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Message Board 專案簡報</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, 0.88);
+      --panel-strong: #0f172a;
+      --text: #e5edf8;
+      --muted: #9fb0c7;
+      --accent: #38bdf8;
+      --accent-2: #a78bfa;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #fb7185;
+      --border: rgba(148, 163, 184, 0.28);
+      --code: #020617;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.22), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.20), transparent 30%),
+        linear-gradient(135deg, #020617 0%, var(--bg) 48%, #111827 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.55;
+    }
+
+    body { overflow: hidden; }
+
+    .deck {
+      width: min(1180px, calc(100vw - 48px));
+      height: min(720px, calc(100vh - 72px));
+      margin: 36px auto;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      padding: clamp(28px, 5vw, 64px);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.82));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(56, 189, 248, 0.09), transparent 30%),
+        repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.045) 0 1px, transparent 1px 80px);
+      mask-image: linear-gradient(180deg, black, transparent 85%);
+    }
+
+    .slide.active { display: flex; }
+
+    .content { position: relative; z-index: 1; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.86rem;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 18px;
+      font-size: clamp(3rem, 8vw, 6.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: clamp(2.15rem, 5vw, 4.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1.28rem;
+      color: #f8fafc;
+    }
+
+    .lead {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: clamp(1.1rem, 2vw, 1.42rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(2, 6, 23, 0.42);
+    }
+
+    .card strong {
+      color: #fff;
+    }
+
+    ul, ol {
+      margin: 12px 0 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    li + li { margin-top: 8px; }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: #bae6fd;
+      background: rgba(56, 189, 248, 0.11);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 7px;
+      padding: 0.12em 0.38em;
+    }
+
+    pre {
+      margin: 0;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--code);
+      color: #dbeafe;
+      font-size: 0.96rem;
+      overflow: auto;
+      max-height: 360px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      padding: 18px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(2, 6, 23, 0.48);
+      text-align: center;
+      min-height: 132px;
+    }
+
+    .step .num {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #020617;
+      font-weight: 900;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .schema {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      background: rgba(2, 6, 23, 0.46);
+    }
+
+    .schema th, .schema td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .schema th {
+      color: #fff;
+      background: rgba(56, 189, 248, 0.12);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+    }
+
+    .schema td { color: var(--muted); }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: #dbeafe;
+      background: rgba(15, 23, 42, 0.7);
+      font-weight: 700;
+    }
+
+    .badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 18px var(--success);
+    }
+
+    .footer {
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      z-index: 10;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .nav button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.88);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: rgba(148, 163, 184, 0.18);
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.18s ease;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .highlight { color: #fff; font-weight: 800; }
+    .accent { color: var(--accent); }
+    .warning { color: var(--warning); }
+
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .deck { height: auto; margin: 18px auto 84px; }
+      .slide { position: relative; min-height: calc(100vh - 120px); }
+      .grid, .grid.two, .flow { grid-template-columns: 1fr; }
+      .footer { width: calc(100% - 32px); justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active">
+      <div class="content">
+        <p class="eyebrow">PHP + MySQL + jQuery</p>
+        <h1>Message Board<br><span class="accent">留言板專案</span></h1>
+        <p class="lead">一個可部署在 XAMPP / Endor LAMP Sandbox 的單頁留言板：使用 jQuery AJAX 送出留言，PHP API 處理驗證與資料庫寫入，MySQL/MariaDB 保存資料。</p>
+        <div class="badge-row">
+          <span class="badge">Apache / PHP</span>
+          <span class="badge">PDO + MySQL</span>
+          <span class="badge">jQuery AJAX</span>
+          <span class="badge">XSS / SQL Injection 防護</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Project Goal</p>
+        <h2>這個程式在做什麼？</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>新增留言</h3>
+            <p>使用者輸入暱稱與留言內容，前端不重新整理頁面，透過 AJAX POST 到 <code>api/create.php</code>。</p>
+          </article>
+          <article class="card">
+            <h3>讀取列表</h3>
+            <p>頁面載入或按「重新載入」時，呼叫 <code>api/list.php</code> 取得最新留言。</p>
+          </article>
+          <article class="card">
+            <h3>基本安全</h3>
+            <p>後端驗證欄位長度，SQL 使用 prepared statements；前端 render 前 escape 內容避免 XSS。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Files</p>
+        <h2>專案檔案結構</h2>
+        <pre><code>message-board/
+├── index.html                 # 留言板 UI
+├── assets/
+│   ├── css/styles.css          # 卡片式版面與表單樣式
+│   └── js/app.js               # jQuery AJAX / render 邏輯
+├── api/
+│   ├── db.php                  # PDO 資料庫連線
+│   ├── list.php                # 讀取留言 API
+│   └── create.php              # 新增留言 API
+├── database/
+│   └── schema.sql              # 建立 database/table
+└── tests/                      # 靜態驗收測試</code></pre>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Frontend</p>
+        <h2>前端畫面與互動</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3><code>index.html</code></h3>
+            <ul>
+              <li>新增留言表單：暱稱、留言內容、送出按鈕。</li>
+              <li>留言列表區塊：顯示最新留言與空狀態。</li>
+              <li>載入 jQuery 3.7.1 與 <code>assets/js/app.js</code>。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3><code>assets/js/app.js</code></h3>
+            <ul>
+              <li>頁面載入時呼叫 <code>api/list.php</code>。</li>
+              <li>表單送出時 POST 到 <code>api/create.php</code>。</li>
+              <li>成功新增後清空 textarea 並重新載入列表。</li>
+              <li>使用 jQuery <code>.text()</code> 轉義使用者輸入。</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Backend API</p>
+        <h2>後端 API 設計</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>GET <code>api/list.php</code></h3>
+            <ul>
+              <li>連線資料庫。</li>
+              <li>查詢 <code>messages</code>。</li>
+              <li>排序：<code>created_at DESC, id DESC</code>。</li>
+              <li>回傳 JSON：<code>{success, messages}</code>。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>POST <code>api/create.php</code></h3>
+            <ul>
+              <li>只接受 POST。</li>
+              <li>驗證暱稱必填、最多 30 字。</li>
+              <li>驗證留言必填、最多 500 字。</li>
+              <li>使用 PDO prepared statement 寫入。</li>
+              <li>成功回傳 HTTP <code>201</code> 與新增資料。</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Database</p>
+        <h2>Table Schema：<code>messages</code></h2>
+        <table class="schema">
+          <thead>
+            <tr>
+              <th>欄位</th>
+              <th>型別</th>
+              <th>限制 / 說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>INT</td>
+              <td>Primary Key、Auto Increment，用來唯一識別每一則留言。</td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td>VARCHAR(30)</td>
+              <td>留言者暱稱；後端限制最多 30 字。</td>
+            </tr>
+            <tr>
+              <td><code>content</code></td>
+              <td>TEXT</td>
+              <td>留言內容；後端限制最多 500 字。</td>
+            </tr>
+            <tr>
+              <td><code>created_at</code></td>
+              <td>DATETIME</td>
+              <td>預設 <code>CURRENT_TIMESTAMP</code>，用於顯示與排序。</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">Schema 不強制指定 <code>ENGINE=InnoDB</code>，讓 XAMPP 與 Endor LAMP Sandbox 都可以使用環境預設 storage engine。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">SQL</p>
+        <h2>建表 SQL</h2>
+        <pre><code>CREATE DATABASE IF NOT EXISTS message_board
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE message_board;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(30) NOT NULL,
+  content TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;</code></pre>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Flow</p>
+        <h2>新增留言流程</h2>
+        <div class="flow">
+          <div class="step"><span class="num">1</span><h3>輸入</h3><p>使用者填寫暱稱與留言內容。</p></div>
+          <div class="step"><span class="num">2</span><h3>AJAX</h3><p>jQuery 攔截 submit，POST 到 <code>api/create.php</code>。</p></div>
+          <div class="step"><span class="num">3</span><h3>驗證</h3><p>PHP 檢查 method、必填與長度限制。</p></div>
+          <div class="step"><span class="num">4</span><h3>寫入</h3><p>PDO prepared statement 寫入 MySQL。</p></div>
+          <div class="step"><span class="num">5</span><h3>刷新</h3><p>前端收到成功回應後重新載入列表。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Security</p>
+        <h2>安全性處理</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>SQL Injection</h3>
+            <p>新增留言使用 PDO <code>prepare()</code> 與 <code>:name</code>、<code>:content</code> placeholders，不把使用者輸入直接串到 SQL。</p>
+          </article>
+          <article class="card">
+            <h3>XSS</h3>
+            <p>前端 render 前使用 jQuery <code>.text()</code> escape 使用者內容，<code>&lt;script&gt;</code> 會顯示成文字而非執行。</p>
+          </article>
+          <article class="card">
+            <h3>Input Validation</h3>
+            <p>後端回傳 HTTP <code>422</code> 處理空欄位與超長欄位，避免無效資料進入資料庫。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Deployment</p>
+        <h2>XAMPP / Endor 部署重點</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>XAMPP</h3>
+            <ul>
+              <li>放到 <code>htdocs/message-board/</code>。</li>
+              <li>啟動 Apache 與 MySQL。</li>
+              <li>匯入 <code>database/schema.sql</code>。</li>
+              <li>開啟 <code>http://localhost/message-board/</code>。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Endor LAMP Sandbox</h3>
+            <ul>
+              <li>掛到 <code>/var/www/localhost/htdocs/app</code>。</li>
+              <li>MariaDB 帳密為 <code>root/root</code>。</li>
+              <li>匯入 schema 後開 <code>/app/</code>。</li>
+              <li>若 private repo mount 失敗，需改 public 或用 token 下載。</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <p class="eyebrow">Summary</p>
+        <h2>總結</h2>
+        <p class="lead">這個留言板把基礎 Web App 的主要環節串起來：前端表單與 AJAX、PHP API、資料庫 schema、輸入驗證、SQL Injection 與 XSS 防護，以及 XAMPP / Endor LAMP 的部署流程。</p>
+        <div class="badge-row">
+          <span class="badge">小而完整的 CRUD 起點</span>
+          <span class="badge">可展示前後端資料流</span>
+          <span class="badge">可作為後續刪除、編輯、分頁、登入功能基礎</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="nav">
+      <button type="button" id="prev" aria-label="上一頁">←</button>
+      <button type="button" id="next" aria-label="下一頁">→</button>
+    </div>
+    <span id="counter">1 / 10</span>
+    <span>使用 ← → 或空白鍵切換</span>
+  </footer>
+  <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progress');
+    let current = 0;
+
+    function showSlide(index) {
+      current = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      counter.textContent = `${current + 1} / ${slides.length}`;
+      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      history.replaceState(null, '', `#${current + 1}`);
+    }
+
+    document.getElementById('prev').addEventListener('click', () => showSlide(current - 1));
+    document.getElementById('next').addEventListener('click', () => showSlide(current + 1));
+
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) {
+        event.preventDefault();
+        showSlide(current + 1);
+      }
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) {
+        event.preventDefault();
+        showSlide(current - 1);
+      }
+      if (event.key === 'Home') showSlide(0);
+      if (event.key === 'End') showSlide(slides.length - 1);
+    });
+
+    const initial = Number.parseInt(location.hash.replace('#', ''), 10);
+    showSlide(Number.isFinite(initial) ? initial - 1 : 0);
+  </script>
+</body>
+</html>

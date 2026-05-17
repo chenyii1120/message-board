@@ -29,6 +29,7 @@
 - `api/list.php`：取得最新留言，依 `created_at DESC, id DESC` 排序。
 - `api/create.php`：新增留言，驗證暱稱與內容長度，使用 PDO prepared statements。
 - `database/schema.sql`：建立資料庫與 `messages` 資料表；不指定 `ENGINE=InnoDB`，讓 MySQL/MariaDB 使用環境預設 storage engine，以相容 Endor LAMP Sandbox 這類沒有 InnoDB 的沙盒環境。
+- `slides/message-board.html`：單檔 HTML 簡報，說明程式內容、table schema、API 與整體流程。
 - `tests/`：不需要 XAMPP 的靜態驗收測試，用來檢查 API、前端 escaping 與 README 交付文件。
 
 ## Endor LAMP Sandbox 使用方式
