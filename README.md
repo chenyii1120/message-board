@@ -28,8 +28,86 @@
 - `api/db.php`：PDO 連線設定，預設連到 XAMPP 常見的 `127.0.0.1:3306`、資料庫 `message_board`、使用者 `root`、空密碼。
 - `api/list.php`：取得最新留言，依 `created_at DESC, id DESC` 排序。
 - `api/create.php`：新增留言，驗證暱稱與內容長度，使用 PDO prepared statements。
-- `database/schema.sql`：建立資料庫與 `messages` 資料表。
+- `database/schema.sql`：建立資料庫與 `messages` 資料表；不指定 `ENGINE=InnoDB`，讓 MySQL/MariaDB 使用環境預設 storage engine，以相容 Endor LAMP Sandbox 這類沒有 InnoDB 的沙盒環境。
 - `tests/`：不需要 XAMPP 的靜態驗收測試，用來檢查 API、前端 escaping 與 README 交付文件。
+
+## Endor LAMP Sandbox 使用方式
+
+如果不想在自己的電腦安裝 XAMPP，可以用 Endor 的 LAMP Sandbox：
+
+- Sandbox：`https://endor.dev/s/lamp`
+- Apache web root：`/var/www/localhost/htdocs/`
+- MariaDB：`127.0.0.1:3306`
+- DB 帳密：`root` / `root`
+- 專案建議 URL：`/app/`
+
+### 1. 掛載 GitHub repository
+
+在 Endor 的「Run your GitHub project」流程中，請選：
+
+1. `Mount in service`
+2. `Target Service` 選 `LAMP`
+3. `Mount Path` 建議填：
+
+```text
+/var/www/localhost/htdocs/app
+```
+
+4. 成功後，在右側 browser 開：
+
+```text
+/app/
+```
+
+注意：Endor 的 GitHub mount 若出現：
+
+```text
+There was an error mounting the GitHub repository. Make sure your repository is public and try it again.
+```
+
+代表它目前無法掛載 private repo。請改用 public repo，或在 Endor terminal 用 GitHub token 下載 zip 後解壓到 `/var/www/localhost/htdocs/app`。
+
+如果你不小心掛到 `/mnt/project`，可以在 LAMP terminal 建 symlink：
+
+```bash
+cd /var/www/localhost/htdocs
+rm -rf app
+ln -s /mnt/project app
+```
+
+### 2. 匯入資料庫
+
+```bash
+mysql -h 127.0.0.1 -P 3306 -u root -proot < /var/www/localhost/htdocs/app/database/schema.sql
+```
+
+`database/schema.sql` 不指定 `ENGINE=InnoDB`，因為 Endor LAMP Sandbox 的 MariaDB/WASM 環境可能沒有 InnoDB；讓資料庫使用預設 storage engine 可同時相容 Endor 與一般 XAMPP/MariaDB。
+
+### 3. 設定 Endor DB 密碼
+
+專案預設密碼是 XAMPP 常見的空密碼；Endor 是 `root`。在 Endor terminal 執行：
+
+```bash
+sed -i "s/getenv('MESSAGE_BOARD_DB_PASSWORD') ?: ''/getenv('MESSAGE_BOARD_DB_PASSWORD') ?: 'root'/" /var/www/localhost/htdocs/app/api/db.php
+```
+
+### 4. 測試 API 與網頁
+
+```bash
+wget -qO- http://127.0.0.1/app/api/list.php
+```
+
+空資料庫預期回傳：
+
+```json
+{"success":true,"messages":[]}
+```
+
+然後在 Endor 右側 browser 打開：
+
+```text
+/app/
+```
 
 ## XAMPP 放置路徑
 

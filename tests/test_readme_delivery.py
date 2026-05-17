@@ -5,6 +5,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
+SCHEMA = ROOT / "database" / "schema.sql"
 
 
 def readme() -> str:
@@ -43,6 +44,18 @@ def test_readme_documents_security_and_validation_checks():
     require("空欄位" in source, "README must include blank-field validation")
     require("超長" in source, "README must include over-length validation")
     require("422" in source, "README must document validation HTTP 422 responses")
+
+
+def test_readme_documents_endor_lamp_sandbox_flow_and_innodb_note():
+    source = readme()
+    schema = SCHEMA.read_text(encoding="utf-8")
+    require("Endor LAMP Sandbox" in source, "README must document Endor LAMP Sandbox usage")
+    require("/var/www/localhost/htdocs/app" in source, "README must document Endor htdocs app mount path")
+    require("Mount in service" in source and "Target Service" in source and "LAMP" in source, "README must explain mounting into the LAMP service")
+    require("root" in source and "-proot" in source, "README must document Endor MariaDB root/root credentials")
+    require("/app/" in source, "README must document the Endor browser URL")
+    require("InnoDB" in source and "預設 storage engine" in source, "README must explain why schema avoids InnoDB")
+    require("ENGINE=InnoDB" not in schema, "schema.sql must not force InnoDB so it works in Endor")
 
 
 def test_readme_records_v2_follow_up_features():
